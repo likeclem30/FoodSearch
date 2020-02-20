@@ -1,53 +1,37 @@
-import React, {useState, useEffect } from 'react';
+import React, {useState} from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import SearchBar from '../components/SearchBar';
-import yelp from '../api/yelp';
+import ResultsList from '../components/ResultsList';
+import useResults from '../hooks/useResults';
 
 
 const SearchScreen = () => {
+    
     const [term, setTerm] = useState('');
-    const [results, setResults] = useState([]);
-    const [errorMessage, setErrorMessage] = useState('');
+    const [ searchApi, results, errorMessage ] = useResults();
+    //console.log(results);
 
-    const searchApi = async (searchTerm) => {
-        console.log('seachApi call') //infinite loop
-        try {
-        const response = await yelp.get('/search', {
-            params: {
-                limit:50,
-                term: searchTerm,
-                location: 'san jose'
-            }
-        })
-        
-        setResults(response.data.businesses)
-    }catch (err){
-        //console.log(err);
-        setErrorMessage('Something went wrong');
-    }
+    const filterResultsByPrice = (price) => {
+        //price === $ || $$ || $$$
+        return results.filter(results =>{
+            return results.price === price;
+        });
     };
-    //bad code 
-    //Call SearchApi when component
-    //is first rendered
-    //searchApi('pasta') //infinite loop
-
-    //Run once-good 🇨good code 
-    useEffect(() => {
-        searchApi('pasta')
-    }, []);
-
-
+    
     return(
         <View>
             <SearchBar 
             term={term} 
-            onTermChange={(newTerm) => setTerm(newTerm)}
+            onTermChange={setTerm}
             onTermSubmit={() => searchApi(term)}
             />
             {errorMessage ? <Text>{errorMessage}</Text> : null}
             <Text>We have found {results.length} results.</Text>
+            <ResultsList results = { filterResultsByPrice('$') } title="Cost Effective"/>
+            <ResultsList results = { filterResultsByPrice('$$')} title="Bit Pricier"/>
+            <ResultsList results = { filterResultsByPrice('$$$')} title="Big Spender"/>
         </View>
-    )
+    );
 };
 
 const styles = StyleSheet.create({});
